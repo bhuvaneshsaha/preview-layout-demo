@@ -330,3 +330,73 @@ $debug-content-color: rgba(0, 0, 255, 0.05);
         opacity: 1;
     }
 }
+
+// Mobile/Tablet Responsive Adjustments
+@media (max-width: 768px) {
+    .preview-container {
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 0; // Full screen
+    }
+
+    .preview-header {
+        padding: 0.5rem; // Compact header
+
+        .preview-title {
+            font-size: 1rem;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    .nav-zone {
+        width: 48px; // Larger hit target for touch
+        background: transparent; // No debug color
+
+        // Remove the expansion behavior on mobile to avoid jumping
+        &.visible:hover {
+            width: 48px;
+            background: transparent;
+        }
+
+        // Always show indicators faintly so user knows they are there
+        .zone-indicator {
+            opacity: 0.3;
+            transform: scale(0.8);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            backdrop-filter: blur(4px);
+            width: 36px;
+            height: 36px;
+            box-shadow: none;
+        }
+
+        // Active/Tap state
+        &:active .zone-indicator {
+            opacity: 0.8;
+            transform: scale(0.9);
+            background: rgba(0, 0, 0, 0.8);
+        }
+    }
+
+    .content-wrapper {
+        // Remove the reserve space for nav zones to maximize mobile screen
+        margin: 0;
+        padding: 0.5rem; // Minimal padding
+    }
+
+    .floating-controls {
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+
+    .preview-footer {
+        flex-wrap: wrap; // Allow wrapping if specific metadata is long
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+}
