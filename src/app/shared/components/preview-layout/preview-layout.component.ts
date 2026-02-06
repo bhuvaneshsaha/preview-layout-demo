@@ -25,6 +25,8 @@ export class PreviewLayoutComponent {
     @Input() hasPrevious: boolean = false;
     @Input() hasNext: boolean = false;
     @Input() isLoading: boolean = false;
+    @Input() navigationLocked: boolean = false;
+    @Input() closeLocked: boolean = false;
 
     @Output() close = new EventEmitter<void>();
     @Output() previous = new EventEmitter<void>();
@@ -35,24 +37,28 @@ export class PreviewLayoutComponent {
 
     @HostListener('document:keydown.escape')
     onEscape() {
-        this.close.emit();
+        if (!this.closeLocked) {
+            this.close.emit();
+        }
     }
 
     @HostListener('document:keydown.arrowleft')
     onLeftArrow() {
-        if (this.hasPrevious && !this.isLoading) {
+        if (this.hasPrevious && !this.isLoading && !this.navigationLocked) {
             this.previous.emit();
         }
     }
 
     @HostListener('document:keydown.arrowright')
     onRightArrow() {
-        if (this.hasNext && !this.isLoading) {
+        if (this.hasNext && !this.isLoading && !this.navigationLocked) {
             this.next.emit();
         }
     }
 
     onBackdropClick(event: MouseEvent) {
+        if (this.closeLocked) return;
+
         if ((event.target as HTMLElement).classList.contains('preview-backdrop')) {
             this.close.emit();
         }

@@ -5,26 +5,29 @@
             <div class="header-content">
                 <ng-content select="[preview-title]"></ng-content>
             </div>
-            <button class="close-btn" (click)="close.emit()" aria-label="Close preview">
+            <button class="close-btn" [disabled]="closeLocked" (click)="close.emit()" aria-label="Close preview">
                 <mat-icon>close</mat-icon>
             </button>
         </header>
 
         <!-- Floating Close Button (when header is hidden) -->
-        <button class="floating-close-btn" *ngIf="!titleContent" (click)="close.emit()" aria-label="Close preview">
+        <button class="floating-close-btn" *ngIf="!titleContent" [disabled]="closeLocked" (click)="close.emit()"
+            aria-label="Close preview">
             <mat-icon>close</mat-icon>
         </button>
 
         <!-- Main Content Area -->
         <div class="preview-body">
             <!-- Hover Navigation Zones -->
-            <div class="nav-zone left" [class.visible]="hasPrevious" (click)="hasPrevious && previous.emit()">
+            <div class="nav-zone left" [class.visible]="hasPrevious && !navigationLocked"
+                (click)="hasPrevious && !navigationLocked && previous.emit()">
                 <div class="zone-indicator">
                     <mat-icon>chevron_left</mat-icon>
                 </div>
             </div>
 
-            <div class="nav-zone right" [class.visible]="hasNext" (click)="hasNext && next.emit()">
+            <div class="nav-zone right" [class.visible]="hasNext && !navigationLocked"
+                (click)="hasNext && !navigationLocked && next.emit()">
                 <div class="zone-indicator">
                     <mat-icon>chevron_right</mat-icon>
                 </div>
