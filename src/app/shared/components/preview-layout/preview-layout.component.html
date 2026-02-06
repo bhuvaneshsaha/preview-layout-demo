@@ -1,29 +1,34 @@
 <div class="preview-backdrop" (click)="onBackdropClick($event)">
     <div class="preview-container">
         <!-- Header -->
-        <header class="preview-header">
+        <header class="preview-header" *ngIf="titleContent">
             <div class="header-content">
                 <ng-content select="[preview-title]"></ng-content>
             </div>
             <button class="close-btn" (click)="close.emit()" aria-label="Close preview">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+                <mat-icon>close</mat-icon>
             </button>
         </header>
 
+        <!-- Floating Close Button (when header is hidden) -->
+        <button class="floating-close-btn" *ngIf="!titleContent" (click)="close.emit()" aria-label="Close preview">
+            <mat-icon>close</mat-icon>
+        </button>
+
         <!-- Main Content Area -->
         <div class="preview-body">
-            <!-- Navigation Controls: Left -->
-            <button class="nav-btn prev-btn" [disabled]="!hasPrevious || isLoading" (click)="previous.emit()"
-                aria-label="Previous item">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
-            </button>
+            <!-- Hover Navigation Zones -->
+            <div class="nav-zone left" [class.visible]="hasPrevious" (click)="hasPrevious && previous.emit()">
+                <div class="zone-indicator">
+                    <mat-icon>chevron_left</mat-icon>
+                </div>
+            </div>
+
+            <div class="nav-zone right" [class.visible]="hasNext" (click)="hasNext && next.emit()">
+                <div class="zone-indicator">
+                    <mat-icon>chevron_right</mat-icon>
+                </div>
+            </div>
 
             <!-- Content -->
             <div class="content-wrapper">
@@ -33,21 +38,24 @@
 
                 <ng-content></ng-content>
             </div>
-
-            <!-- Navigation Controls: Right -->
-            <button class="nav-btn next-btn" [disabled]="!hasNext || isLoading" (click)="next.emit()"
-                aria-label="Next item">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-            </button>
         </div>
 
-        <!-- Metadata Panel (Optional) -->
-        <!-- Footer Panel (Optional) -->
+        <!-- Footer Panel -->
         <div class="preview-footer">
-            <ng-content select="[preview-footer]"></ng-content>
+            <button class="footer-nav-btn" [disabled]="!hasPrevious || isLoading" (click)="previous.emit()"
+                aria-label="Previous item">
+                <mat-icon>arrow_back</mat-icon>
+            </button>
+
+            <div class="footer-content" *ngIf="footerContent">
+                <ng-content select="[preview-footer]"></ng-content>
+            </div>
+            <div class="footer-placeholder" *ngIf="!footerContent"></div>
+
+            <button class="footer-nav-btn" [disabled]="!hasNext || isLoading" (click)="next.emit()"
+                aria-label="Next item">
+                <mat-icon>arrow_forward</mat-icon>
+            </button>
         </div>
     </div>
 </div>

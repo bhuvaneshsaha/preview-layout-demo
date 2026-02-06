@@ -1,20 +1,20 @@
 import { Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PreviewLayoutComponent } from '../../shared/components/preview-layout/preview-layout.component';
+import { PreviewLayoutComponent, PreviewTitleDirective, PreviewFooterDirective } from '../../shared/components/preview-layout/preview-layout.component';
 
 export interface PreviewItem {
-    id: string | number;
-    title: string;
-    type: 'image' | 'pdf' | 'document';
-    url: string; // url to content or thumbnail
-    metadata?: Record<string, any>;
+  id: string | number;
+  title: string;
+  type: 'image' | 'pdf' | 'document';
+  url: string; // url to content or thumbnail
+  metadata?: Record<string, any>;
 }
 
 @Component({
-    selector: 'app-demo',
-    standalone: true,
-    imports: [CommonModule, PreviewLayoutComponent],
-    template: `
+  selector: 'app-demo',
+  standalone: true,
+  imports: [CommonModule, PreviewLayoutComponent, PreviewTitleDirective, PreviewFooterDirective],
+  template: `
     <div class="demo-container">
       <div class="intro">
         <h2>Asset Gallery</h2>
@@ -90,7 +90,7 @@ export interface PreviewItem {
       </app-preview-layout>
     </div>
   `,
-    styles: [`
+  styles: [`
     .demo-container {
       max-width: 1200px;
       margin: 0 auto;
@@ -192,108 +192,108 @@ export interface PreviewItem {
 })
 export class DemoComponent {
 
-    // State
-    itemList = signal<PreviewItem[]>([]);
-    currentIndex = signal<number>(-1);
-    isOpen = signal<boolean>(false);
-    isLoading = signal<boolean>(false);
+  // State
+  itemList = signal<PreviewItem[]>([]);
+  currentIndex = signal<number>(-1);
+  isOpen = signal<boolean>(false);
+  isLoading = signal<boolean>(false);
 
-    // Simulation config
-    readonly totalItems = 100;
+  // Simulation config
+  readonly totalItems = 100;
 
-    // Computed
-    currentItem = computed(() => {
-        const idx = this.currentIndex();
-        const items = this.itemList();
-        if (idx >= 0 && idx < items.length) {
-            return items[idx];
+  // Computed
+  currentItem = computed(() => {
+    const idx = this.currentIndex();
+    const items = this.itemList();
+    if (idx >= 0 && idx < items.length) {
+      return items[idx];
+    }
+    return null;
+  });
+
+  hasPrevious = computed(() => this.currentIndex() > 0);
+
+  hasNext = computed(() => {
+    // Can navigate next if:
+    // 1. Not at the end of locally loaded list
+    // 2. OR there are more items on the "server" to fetch
+    return this.currentIndex() < this.itemList().length - 1 || this.itemList().length < this.totalItems;
+  });
+
+  constructor() {
+    this.generateMockItems(20);
+  }
+
+  generateMockItems(count: number, startIndex: number = 0) {
+    if (startIndex >= this.totalItems) return;
+
+    const remaining = this.totalItems - startIndex;
+    const limit = Math.min(count, remaining);
+
+    const types: ('image' | 'pdf' | 'document')[] = ['image', 'pdf', 'document'];
+    const formattedItems: PreviewItem[] = Array.from({ length: limit }).map((_, i) => {
+      const idx = startIndex + i + 1;
+      const type = types[idx % 3];
+      return {
+        id: idx,
+        title: `Asset #${idx} - ${type.toUpperCase()}`,
+        type: type,
+        url: `https://picsum.photos/seed/${idx}/800/600`,
+        metadata: {
+          'Created By': 'John Doe',
+          'Date': new Date().toLocaleDateString(),
+          'File Size': `${Math.floor(Math.random() * 5000) + 500} KB`,
+          'Status': 'Approved'
         }
-        return null;
+      };
     });
 
-    hasPrevious = computed(() => this.currentIndex() > 0);
+    // Update signal
+    if (startIndex === 0) {
+      this.itemList.set(formattedItems);
+    } else {
+      this.itemList.update(current => [...current, ...formattedItems]);
+    }
+  }
 
-    hasNext = computed(() => {
-        // Can navigate next if:
-        // 1. Not at the end of locally loaded list
-        // 2. OR there are more items on the "server" to fetch
-        return this.currentIndex() < this.itemList().length - 1 || this.itemList().length < this.totalItems;
-    });
+  openPreview(index: number) {
+    this.currentIndex.set(index);
+    this.isOpen.set(true);
+  }
 
-    constructor() {
-        this.generateMockItems(20);
+  close() {
+    this.isOpen.set(false);
+    this.currentIndex.set(-1);
+  }
+
+  previous() {
+    if (this.currentIndex() > 0) {
+      this.currentIndex.update(i => i - 1);
+    }
+  }
+
+  async onNext() {
+    const currentIdx = this.currentIndex();
+    const currentList = this.itemList();
+
+    // If we are at the end of local items but have more on server, load them
+    if (currentIdx >= currentList.length - 2 && currentList.length < this.totalItems) {
+      console.log('Near end, loading more items...');
+      this.isLoading.set(true);
+
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Generate more items
+      this.generateMockItems(10, currentList.length);
+
+      this.isLoading.set(false);
     }
 
-    generateMockItems(count: number, startIndex: number = 0) {
-        if (startIndex >= this.totalItems) return;
-
-        const remaining = this.totalItems - startIndex;
-        const limit = Math.min(count, remaining);
-
-        const types: ('image' | 'pdf' | 'document')[] = ['image', 'pdf', 'document'];
-        const formattedItems: PreviewItem[] = Array.from({ length: limit }).map((_, i) => {
-            const idx = startIndex + i + 1;
-            const type = types[idx % 3];
-            return {
-                id: idx,
-                title: `Asset #${idx} - ${type.toUpperCase()}`,
-                type: type,
-                url: `https://picsum.photos/seed/${idx}/800/600`,
-                metadata: {
-                    'Created By': 'John Doe',
-                    'Date': new Date().toLocaleDateString(),
-                    'File Size': `${Math.floor(Math.random() * 5000) + 500} KB`,
-                    'Status': 'Approved'
-                }
-            };
-        });
-
-        // Update signal
-        if (startIndex === 0) {
-            this.itemList.set(formattedItems);
-        } else {
-            this.itemList.update(current => [...current, ...formattedItems]);
-        }
+    // Proceed to next if available
+    // Re-check list length as it might have increased
+    if (this.currentIndex() < this.itemList().length - 1) {
+      this.currentIndex.update(i => i + 1);
     }
-
-    openPreview(index: number) {
-        this.currentIndex.set(index);
-        this.isOpen.set(true);
-    }
-
-    close() {
-        this.isOpen.set(false);
-        this.currentIndex.set(-1);
-    }
-
-    previous() {
-        if (this.currentIndex() > 0) {
-            this.currentIndex.update(i => i - 1);
-        }
-    }
-
-    async onNext() {
-        const currentIdx = this.currentIndex();
-        const currentList = this.itemList();
-
-        // If we are at the end of local items but have more on server, load them
-        if (currentIdx >= currentList.length - 2 && currentList.length < this.totalItems) {
-            console.log('Near end, loading more items...');
-            this.isLoading.set(true);
-
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 800));
-
-            // Generate more items
-            this.generateMockItems(10, currentList.length);
-
-            this.isLoading.set(false);
-        }
-
-        // Proceed to next if available
-        // Re-check list length as it might have increased
-        if (this.currentIndex() < this.itemList().length - 1) {
-            this.currentIndex.update(i => i + 1);
-        }
-    }
+  }
 }

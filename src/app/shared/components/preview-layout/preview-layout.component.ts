@@ -1,10 +1,23 @@
-import { Component, EventEmitter, Input, Output, HostListener } from '@angular/core';
+import { Component, EventEmitter, Input, Output, HostListener, Directive, ContentChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+
+@Directive({
+    selector: '[preview-title]',
+    standalone: true
+})
+export class PreviewTitleDirective { }
+
+@Directive({
+    selector: '[preview-footer]',
+    standalone: true
+})
+export class PreviewFooterDirective { }
 
 @Component({
     selector: 'app-preview-layout',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, MatIconModule],
     templateUrl: './preview-layout.component.html',
     styleUrls: ['./preview-layout.component.scss']
 })
@@ -16,6 +29,9 @@ export class PreviewLayoutComponent {
     @Output() close = new EventEmitter<void>();
     @Output() previous = new EventEmitter<void>();
     @Output() next = new EventEmitter<void>();
+
+    @ContentChild(PreviewTitleDirective) titleContent?: PreviewTitleDirective;
+    @ContentChild(PreviewFooterDirective) footerContent?: PreviewFooterDirective;
 
     @HostListener('document:keydown.escape')
     onEscape() {
