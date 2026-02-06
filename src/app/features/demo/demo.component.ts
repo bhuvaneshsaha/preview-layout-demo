@@ -1,7 +1,14 @@
-import { Component, Inject, inject, effect } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PreviewLayoutComponent } from '../../shared/components/preview-layout/preview-layout.component';
-import { PreviewService, PreviewItem } from '../../core/services/preview.service';
+
+export interface PreviewItem {
+    id: string | number;
+    title: string;
+    type: 'image' | 'pdf' | 'document';
+    url: string; // url to content or thumbnail
+    metadata?: Record<string, any>;
+}
 
 @Component({
     selector: 'app-demo',
@@ -12,13 +19,13 @@ import { PreviewService, PreviewItem } from '../../core/services/preview.service
       <div class="intro">
         <h2>Asset Gallery</h2>
         <p>Click on any asset to open the preview. Use arrow keys or on-screen buttons to navigate.</p>
-        <p class="stats">Loaded {{ itemList.length }} items. (Pagination implementation simulates fetching more)</p>
+        <p class="stats">Loaded {{ itemList().length }} items. (Pagination implementation simulates fetching more)</p>
       </div>
 
       <div class="grid">
         <div 
           class="card" 
-          *ngFor="let item of itemList; let i = index"
+          *ngFor="let item of itemList(); let i = index"
           (click)="openPreview(i)">
           <div class="card-thumbnail" [ngClass]="item.type">
             <!-- Mock Thumbnail content -->
@@ -35,18 +42,21 @@ import { PreviewService, PreviewItem } from '../../core/services/preview.service
 
       <!-- Preview Overlay -->
       <app-preview-layout
-        *ngIf="previewService.isOpen()"
-        [title]="previewService.currentItem()?.title || ''"
-        [metadata]="previewService.currentItem()?.metadata || null"
-        [hasPrevious]="previewService.hasPrevious()"
-        [hasNext]="true" 
-        [isLoading]="previewService.isLoading()"
-        (close)="previewService.close()"
-        (previous)="previewService.previous()"
+        *ngIf="isOpen()"
+        [hasPrevious]="hasPrevious()"
+        [hasNext]="hasNext()" 
+        [isLoading]="isLoading()"
+        (close)="close()"
+        (previous)="previous()"
         (next)="onNext()">
         
+        <!-- Header Content -->
+        <h2 preview-title style="margin: 0; font-size: 1.25rem;">
+          {{ currentItem()?.title }}
+        </h2>
+
         <!-- Projected Content based on type -->
-        <div class="preview-content" *ngIf="previewService.currentItem() as item">
+        <div class="preview-content" *ngIf="currentItem() as item">
           <div *ngIf="item.type === 'image'" class="visual-preview image-preview">
              <img [src]="item.url" [alt]="item.title" style="max-width: 100%; max-height: 60vh; object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
              <p style="margin-top: 1rem; color: #666;">Note: Using placeholder images for demo</p>
@@ -63,6 +73,16 @@ import { PreviewService, PreviewItem } from '../../core/services/preview.service
             <div class="doc-placeholder">
               <span>Document Content Placeholder</span>
               <p>Lore ipsum dolor sit amet for {{ item.title }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Content -->
+        <div preview-footer *ngIf="currentItem()?.metadata as metadata">
+           <div class="metadata-grid">
+            <div class="metadata-item" *ngFor="let item of metadata | keyvalue">
+              <span class="label">{{ item.key }}:</span>
+              <span class="value">{{ item.value }}</span>
             </div>
           </div>
         </div>
@@ -148,28 +168,77 @@ import { PreviewService, PreviewItem } from '../../core/services/preview.service
       font-weight: 500;
       border-radius: 4px;
     }
+
+    .metadata-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.5rem 1.5rem;
+    }
+
+    .metadata-item {
+      display: flex;
+      gap: 0.5rem;
+      
+      .label {
+        font-weight: 500;
+        color: #666;
+      }
+      
+      .value {
+        color: #333;
+      }
+    }
   `]
 })
 export class DemoComponent {
-    previewService = inject(PreviewService);
 
-    // Local list of items (this would come from an API usually)
-    itemList: PreviewItem[] = [];
+    // State
+    itemList = signal<PreviewItem[]>([]);
+    currentIndex = signal<number>(-1);
+    isOpen = signal<boolean>(false);
+    isLoading = signal<boolean>(false);
+
+    // Simulation config
+    readonly totalItems = 100;
+
+    // Computed
+    currentItem = computed(() => {
+        const idx = this.currentIndex();
+        const items = this.itemList();
+        if (idx >= 0 && idx < items.length) {
+            return items[idx];
+        }
+        return null;
+    });
+
+    hasPrevious = computed(() => this.currentIndex() > 0);
+
+    hasNext = computed(() => {
+        // Can navigate next if:
+        // 1. Not at the end of locally loaded list
+        // 2. OR there are more items on the "server" to fetch
+        return this.currentIndex() < this.itemList().length - 1 || this.itemList().length < this.totalItems;
+    });
 
     constructor() {
         this.generateMockItems(20);
     }
 
     generateMockItems(count: number, startIndex: number = 0) {
+        if (startIndex >= this.totalItems) return;
+
+        const remaining = this.totalItems - startIndex;
+        const limit = Math.min(count, remaining);
+
         const types: ('image' | 'pdf' | 'document')[] = ['image', 'pdf', 'document'];
-        const formattedItems: PreviewItem[] = Array.from({ length: count }).map((_, i) => {
+        const formattedItems: PreviewItem[] = Array.from({ length: limit }).map((_, i) => {
             const idx = startIndex + i + 1;
             const type = types[idx % 3];
             return {
                 id: idx,
                 title: `Asset #${idx} - ${type.toUpperCase()}`,
                 type: type,
-                url: `https://picsum.photos/seed/${idx}/800/600`, // works for images, ignored for others in template
+                url: `https://picsum.photos/seed/${idx}/800/600`,
                 metadata: {
                     'Created By': 'John Doe',
                     'Date': new Date().toLocaleDateString(),
@@ -179,44 +248,52 @@ export class DemoComponent {
             };
         });
 
+        // Update signal
         if (startIndex === 0) {
-            this.itemList = formattedItems;
+            this.itemList.set(formattedItems);
         } else {
-            this.itemList = [...this.itemList, ...formattedItems];
+            this.itemList.update(current => [...current, ...formattedItems]);
         }
-
-        // Sync with service if needed, but usually we just pass the full list when opening
-        // or perform incremental updates.
     }
 
     openPreview(index: number) {
-        this.previewService.open(this.itemList, index);
+        this.currentIndex.set(index);
+        this.isOpen.set(true);
+    }
+
+    close() {
+        this.isOpen.set(false);
+        this.currentIndex.set(-1);
+    }
+
+    previous() {
+        if (this.currentIndex() > 0) {
+            this.currentIndex.update(i => i - 1);
+        }
     }
 
     async onNext() {
-        const currentIndex = this.previewService.currentIndex();
-        const totalItems = this.previewService.items().length;
+        const currentIdx = this.currentIndex();
+        const currentList = this.itemList();
 
-        // Check if we are near the end to simulate pagination
-        if (currentIndex >= totalItems - 2) {
+        // If we are at the end of local items but have more on server, load them
+        if (currentIdx >= currentList.length - 2 && currentList.length < this.totalItems) {
             console.log('Near end, loading more items...');
-            this.previewService.setLoading(true);
+            this.isLoading.set(true);
 
             // Simulate API delay
             await new Promise(resolve => setTimeout(resolve, 800));
 
             // Generate more items
-            const currentCount = this.itemList.length;
-            this.generateMockItems(10, currentCount);
+            this.generateMockItems(10, currentList.length);
 
-            // Update the service with the new list
-            // Note: In a real app we might just append to the service
-            this.previewService.appendItems(this.itemList.slice(currentCount));
-
-            this.previewService.setLoading(false);
+            this.isLoading.set(false);
         }
 
-        // Proceed to next
-        this.previewService.next();
+        // Proceed to next if available
+        // Re-check list length as it might have increased
+        if (this.currentIndex() < this.itemList().length - 1) {
+            this.currentIndex.update(i => i + 1);
+        }
     }
 }

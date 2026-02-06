@@ -9,8 +9,6 @@ import { CommonModule } from '@angular/common';
     styleUrls: ['./preview-layout.component.scss']
 })
 export class PreviewLayoutComponent {
-    @Input() title: string = '';
-    @Input() metadata: Record<string, any> | null = null;
     @Input() hasPrevious: boolean = false;
     @Input() hasNext: boolean = false;
     @Input() isLoading: boolean = false;
