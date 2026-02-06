@@ -1,5 +1,8 @@
 import { Component, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { PreviewLayoutComponent, PreviewTitleDirective, PreviewFooterDirective, PreviewAlertDirective, PreviewHeaderActionsDirective } from '../../shared/components/preview-layout/preview-layout.component';
 
 export interface PreviewItem {
@@ -14,7 +17,7 @@ export interface PreviewItem {
 @Component({
   selector: 'app-demo',
   standalone: true,
-  imports: [CommonModule, PreviewLayoutComponent, PreviewTitleDirective, PreviewFooterDirective, PreviewAlertDirective, PreviewHeaderActionsDirective],
+  imports: [CommonModule, PreviewLayoutComponent, PreviewTitleDirective, PreviewFooterDirective, PreviewAlertDirective, PreviewHeaderActionsDirective, MatIconModule, MatButtonModule, MatTooltipModule],
   template: `
     <div class="demo-container">
       <div class="intro">
@@ -54,15 +57,21 @@ export interface PreviewItem {
         (next)="onNext()">
         
         <!-- Header Content -->
-        <!-- <h2 preview-title style="margin: 0; font-size: 1.25rem;">
+        <h2 preview-title style="margin: 0; font-size: 1.25rem;">
           {{ currentItem()?.title }}
-        </h2> -->
+        </h2>
 
         <!-- Action Items (e.g. Notifications) -->
         <ng-template preview-header-actions>
-            <button class="action-btn" (click)="toggleNotifications()" style="background: none; border: none; cursor: pointer; position: relative; padding: 0.5rem; border-radius: 50%; display: flex;">
+            <!-- Optional on-demand controls (e.g. Refresh) -->
+             <button mat-icon-button (click)="isLoading.set(true); generateMockItems(5); isLoading.set(false)" matTooltip="Refresh Data">
+                <mat-icon>refresh</mat-icon>
+            </button>
+
+            <button mat-icon-button class="action-btn" (click)="toggleNotifications()">
                  <span *ngIf="currentItem()?.issues" style="position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: red; border-radius: 50%;"></span>
-                 <span style="font-size: 1.2rem;">🔔</span>
+                 <span style="font-size: 1.2rem;">🔔</span> 
+                 <!-- Or use mat-icon: <mat-icon [matBadge]="currentItem()?.issues ? '!' : ''" matBadgeColor="warn">notifications</mat-icon> -->
             </button>
         </ng-template>
 

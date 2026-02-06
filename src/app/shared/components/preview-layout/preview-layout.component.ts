@@ -1,6 +1,9 @@
 import { Component, EventEmitter, Input, Output, HostListener, Directive, ContentChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { MatMenuModule } from '@angular/material/menu';
 
 @Directive({
     selector: '[preview-title]',
@@ -28,10 +31,18 @@ export class PreviewHeaderActionsDirective {
     constructor(public template: TemplateRef<any>) { }
 }
 
+@Directive({
+    selector: '[preview-controls]',
+    standalone: true
+})
+export class PreviewControlsDirective {
+    constructor(public template: TemplateRef<any>) { }
+}
+
 @Component({
     selector: 'app-preview-layout',
     standalone: true,
-    imports: [CommonModule, MatIconModule],
+    imports: [CommonModule, MatIconModule, MatButtonModule, DragDropModule, MatMenuModule],
     templateUrl: './preview-layout.component.html',
     styleUrls: ['./preview-layout.component.scss']
 })

@@ -15,7 +15,8 @@
                 <div class="divider" *ngIf="headerActionsContent" style="width: 1px; height: 1.5rem; background: #eee;">
                 </div>
 
-                <button class="close-btn" [disabled]="closeLocked" (click)="close.emit()" aria-label="Close preview">
+                <button mat-icon-button class="close-btn" [disabled]="closeLocked" (click)="close.emit()"
+                    aria-label="Close preview">
                     <mat-icon>close</mat-icon>
                 </button>
             </div>
@@ -23,14 +24,22 @@
 
         <!-- Floating Controls (Overlay) - Only if Title is Missing -->
         <div class="floating-controls" *ngIf="!titleContent">
-            <div class="floating-pill">
+            <div class="floating-pill" cdkDrag cdkDragBoundary=".preview-container">
+                <!-- Drag Handle -->
+                <div cdkDragHandle
+                    style="cursor: move; color: #999; display: flex; align-items: center; justify-content: center; padding-left: 4px;">
+                    <mat-icon style="font-size: 20px; width: 20px; height: 20px;">drag_indicator</mat-icon>
+                </div>
+
+                <div class="divider"></div>
+
                 <div class="header-actions" *ngIf="headerActionsContent">
                     <ng-container *ngTemplateOutlet="headerActionsContent.template"></ng-container>
                 </div>
 
                 <div class="divider" *ngIf="headerActionsContent"></div>
 
-                <button class="icon-btn" [disabled]="closeLocked" (click)="close.emit()" aria-label="Close preview">
+                <button mat-icon-button [disabled]="closeLocked" (click)="close.emit()" aria-label="Close preview">
                     <mat-icon>close</mat-icon>
                 </button>
             </div>
