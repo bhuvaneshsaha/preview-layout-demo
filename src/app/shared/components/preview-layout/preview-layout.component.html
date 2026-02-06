@@ -1,23 +1,48 @@
 <div class="preview-backdrop" (click)="onBackdropClick($event)">
     <div class="preview-container">
-        <!-- Header -->
+        <!-- Header (Standard Flow) - Only if Title Exists -->
         <header class="preview-header" *ngIf="titleContent">
             <div class="header-content">
                 <ng-content select="[preview-title]"></ng-content>
             </div>
-            <button class="close-btn" [disabled]="closeLocked" (click)="close.emit()" aria-label="Close preview">
-                <mat-icon>close</mat-icon>
-            </button>
+
+            <div class="header-controls" style="display: flex; align-items: center; gap: 0.5rem;">
+                <!-- Custom Actions -->
+                <div class="header-actions" *ngIf="headerActionsContent">
+                    <ng-container *ngTemplateOutlet="headerActionsContent.template"></ng-container>
+                </div>
+
+                <div class="divider" *ngIf="headerActionsContent" style="width: 1px; height: 1.5rem; background: #eee;">
+                </div>
+
+                <button class="close-btn" [disabled]="closeLocked" (click)="close.emit()" aria-label="Close preview">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
         </header>
 
-        <!-- Floating Close Button (when header is hidden) -->
-        <button class="floating-close-btn" *ngIf="!titleContent" [disabled]="closeLocked" (click)="close.emit()"
-            aria-label="Close preview">
-            <mat-icon>close</mat-icon>
-        </button>
+        <!-- Floating Controls (Overlay) - Only if Title is Missing -->
+        <div class="floating-controls" *ngIf="!titleContent">
+            <div class="floating-pill">
+                <div class="header-actions" *ngIf="headerActionsContent">
+                    <ng-container *ngTemplateOutlet="headerActionsContent.template"></ng-container>
+                </div>
+
+                <div class="divider" *ngIf="headerActionsContent"></div>
+
+                <button class="icon-btn" [disabled]="closeLocked" (click)="close.emit()" aria-label="Close preview">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+        </div>
 
         <!-- Main Content Area -->
         <div class="preview-body">
+            <!-- Notification/Alert Bar -->
+            <div class="preview-alert-bar" *ngIf="alertContent">
+                <ng-content select="[preview-alert]"></ng-content>
+            </div>
+
             <!-- Hover Navigation Zones -->
             <div class="nav-zone left" [class.visible]="hasPrevious && !navigationLocked"
                 (click)="hasPrevious && !navigationLocked && previous.emit()">

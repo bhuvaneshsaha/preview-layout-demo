@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, HostListener, Directive, ContentChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, HostListener, Directive, ContentChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -13,6 +13,20 @@ export class PreviewTitleDirective { }
     standalone: true
 })
 export class PreviewFooterDirective { }
+
+@Directive({
+    selector: '[preview-alert]',
+    standalone: true
+})
+export class PreviewAlertDirective { }
+
+@Directive({
+    selector: '[preview-header-actions]',
+    standalone: true
+})
+export class PreviewHeaderActionsDirective {
+    constructor(public template: TemplateRef<any>) { }
+}
 
 @Component({
     selector: 'app-preview-layout',
@@ -33,6 +47,8 @@ export class PreviewLayoutComponent {
     @Output() next = new EventEmitter<void>();
 
     @ContentChild(PreviewTitleDirective) titleContent?: PreviewTitleDirective;
+    @ContentChild(PreviewHeaderActionsDirective) headerActionsContent?: PreviewHeaderActionsDirective;
+    @ContentChild(PreviewAlertDirective) alertContent?: PreviewAlertDirective;
     @ContentChild(PreviewFooterDirective) footerContent?: PreviewFooterDirective;
 
     @HostListener('document:keydown.escape')

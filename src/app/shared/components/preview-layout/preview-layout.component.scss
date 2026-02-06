@@ -66,40 +66,95 @@ $debug-content-color: rgba(0, 0, 255, 0.05);
             background-color: #f0f0f0;
             color: #333;
         }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
     }
 }
 
-.floating-close-btn {
+.floating-controls {
     position: absolute;
     top: 1rem;
     right: 1rem;
-    z-index: 50;
+    z-index: 100; // Ensure it's above everything including alert bar (40) and floating close btn (50 - old)
+    pointer-events: none; // Let clicks pass through outside the pill
+    display: flex;
+    justify-content: flex-end;
+}
+
+.floating-pill {
+    pointer-events: auto;
     background: white;
-    border: 1px solid #ddd;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    border-radius: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    transition: all 0.2s ease;
-    color: #333;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem; // Compact padding
+    border: 1px solid #f0f0f0;
 
-    &:hover {
-        transform: scale(1.1);
-        background-color: #f5f5f5;
+    .divider {
+        width: 1px;
+        height: 1.5rem;
+        background: #eee;
+    }
+
+    .icon-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #666;
+        padding: 0.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
+        width: 36px;
+        height: 36px;
+
+        &:hover {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
     }
 }
 
 .preview-body {
     flex: 1;
     display: flex;
-    align-items: center;
+    // flex-direction: column; // No longer needed for stacking since alert is absolute
     position: relative;
     background-color: #f9f9f9;
     overflow: hidden;
+}
+
+.preview-alert-bar {
+    position: absolute; // Overlap content
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 40; // Above content, below modal
+    animation: slideDown 0.3s ease-out;
+    // Styling is handled by content projection usually, but we can set defaults
+    background-color: #fff3cd;
+    color: #856404;
+    border-bottom: 1px solid #ffeeba;
+    padding: 0.5rem 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .nav-zone {
@@ -169,8 +224,9 @@ $debug-content-color: rgba(0, 0, 255, 0.05);
 .content-wrapper {
     flex: 1;
     height: 100%;
-    // Reserve space for the collapsed nav zones so content doesn't start under them
-    padding: 1rem $nav-zone-width;
+    // Use margin to push the scrollbar inwards, away from the nav zones
+    margin: 0 $nav-zone-width;
+    padding: 1rem;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -278,6 +334,18 @@ $debug-content-color: rgba(0, 0, 255, 0.05);
 
     to {
         transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
         opacity: 1;
     }
 }

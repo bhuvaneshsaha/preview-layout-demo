@@ -1,6 +1,6 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PreviewLayoutComponent, PreviewTitleDirective, PreviewFooterDirective } from '../../shared/components/preview-layout/preview-layout.component';
+import { PreviewLayoutComponent, PreviewTitleDirective, PreviewFooterDirective, PreviewAlertDirective, PreviewHeaderActionsDirective } from '../../shared/components/preview-layout/preview-layout.component';
 
 export interface PreviewItem {
   id: string | number;
@@ -8,12 +8,13 @@ export interface PreviewItem {
   type: 'image' | 'pdf' | 'document';
   url: string; // url to content or thumbnail
   metadata?: Record<string, any>;
+  issues?: string[]; // Notifications
 }
 
 @Component({
   selector: 'app-demo',
   standalone: true,
-  imports: [CommonModule, PreviewLayoutComponent, PreviewTitleDirective, PreviewFooterDirective],
+  imports: [CommonModule, PreviewLayoutComponent, PreviewTitleDirective, PreviewFooterDirective, PreviewAlertDirective, PreviewHeaderActionsDirective],
   template: `
     <div class="demo-container">
       <div class="intro">
@@ -53,9 +54,24 @@ export interface PreviewItem {
         (next)="onNext()">
         
         <!-- Header Content -->
-        <h2 preview-title style="margin: 0; font-size: 1.25rem;">
+        <!-- <h2 preview-title style="margin: 0; font-size: 1.25rem;">
           {{ currentItem()?.title }}
-        </h2>
+        </h2> -->
+
+        <!-- Action Items (e.g. Notifications) -->
+        <ng-template preview-header-actions>
+            <button class="action-btn" (click)="toggleNotifications()" style="background: none; border: none; cursor: pointer; position: relative; padding: 0.5rem; border-radius: 50%; display: flex;">
+                 <span *ngIf="currentItem()?.issues" style="position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: red; border-radius: 50%;"></span>
+                 <span style="font-size: 1.2rem;">🔔</span>
+            </button>
+        </ng-template>
+
+        <!-- Notification Content -->
+        <div preview-alert *ngIf="showNotifications() && currentItem()?.issues as issues">
+             <div *ngFor="let issue of issues" style="display: flex; gap: 0.5rem; justify-content: center;">
+                 <span>{{ issue }}</span>
+             </div>
+        </div>
 
         <!-- Projected Content based on type -->
         <div class="preview-content" *ngIf="currentItem() as item">
@@ -199,6 +215,8 @@ export class DemoComponent {
   currentIndex = signal<number>(-1);
   isOpen = signal<boolean>(false);
   isLoading = signal<boolean>(false);
+  showNotifications = signal<boolean>(false);
+  autoShowAlerts = signal<boolean>(true); // User preference logic
 
   // Simulation config
   readonly totalItems = 100;
@@ -225,6 +243,32 @@ export class DemoComponent {
 
   constructor() {
     this.generateMockItems(20);
+
+    // Auto-show notifications if enabled and issues exist when item changes
+    effect(() => {
+      const item = this.currentItem();
+      // Only trigger if we are open
+      if (this.isOpen() && item) {
+        const hasIssues = item.issues && item.issues.length > 0;
+
+        if (this.autoShowAlerts() && hasIssues) {
+          // Auto-open if not already open (or keep open)
+          this.showNotifications.set(true);
+        } else {
+          // If no issues, strictly close. 
+          // If there ARE issues but autoShow is false, we generally reset to false on nav 
+          // OR we can decide to persist state. 
+          // "Control to show by default" implies resetting on nav usually.
+          if (!hasIssues) {
+            this.showNotifications.set(false);
+          }
+          // If has issues but autoShow is false, we let it start closed (default state of signal on init/nav? no, signal persists).
+          // So we should probably reset it to false if we want strict "default closed".
+          // But let's just minimal touch: if no issues, definitely close.
+          // If new item has issues + autoShow=true -> Open.
+        }
+      }
+    }, { allowSignalWrites: true });
   }
 
   generateMockItems(count: number, startIndex: number = 0) {
@@ -237,6 +281,8 @@ export class DemoComponent {
     const formattedItems: PreviewItem[] = Array.from({ length: limit }).map((_, i) => {
       const idx = startIndex + i + 1;
       const type = types[idx % 3];
+      const hasIssue = idx % 5 === 0;
+
       return {
         id: idx,
         title: `Asset #${idx} - ${type.toUpperCase()}`,
@@ -246,8 +292,9 @@ export class DemoComponent {
           'Created By': 'John Doe',
           'Date': new Date().toLocaleDateString(),
           'File Size': `${Math.floor(Math.random() * 5000) + 500} KB`,
-          'Status': 'Approved'
-        }
+          'Status': hasIssue ? 'Needs Review' : 'Approved'
+        },
+        issues: hasIssue ? ['⚠️ Low resolution image detected', '⚠️ Metadata incomplete'] : undefined
       };
     });
 
@@ -267,6 +314,11 @@ export class DemoComponent {
   close() {
     this.isOpen.set(false);
     this.currentIndex.set(-1);
+    this.showNotifications.set(false); // Reset on close
+  }
+
+  toggleNotifications() {
+    this.showNotifications.update(v => !v);
   }
 
   previous() {
