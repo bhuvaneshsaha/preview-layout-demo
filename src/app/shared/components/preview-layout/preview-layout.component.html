@@ -41,21 +41,8 @@
         </div>
 
         <!-- Footer Panel -->
-        <div class="preview-footer">
-            <button class="footer-nav-btn" [disabled]="!hasPrevious || isLoading" (click)="previous.emit()"
-                aria-label="Previous item">
-                <mat-icon>arrow_back</mat-icon>
-            </button>
-
-            <div class="footer-content" *ngIf="footerContent">
-                <ng-content select="[preview-footer]"></ng-content>
-            </div>
-            <div class="footer-placeholder" *ngIf="!footerContent"></div>
-
-            <button class="footer-nav-btn" [disabled]="!hasNext || isLoading" (click)="next.emit()"
-                aria-label="Next item">
-                <mat-icon>arrow_forward</mat-icon>
-            </button>
+        <div class="preview-footer" *ngIf="footerContent">
+            <ng-content select="[preview-footer]"></ng-content>
         </div>
     </div>
 </div>

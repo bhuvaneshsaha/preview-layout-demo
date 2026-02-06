@@ -51,9 +51,9 @@ export interface PreviewItem {
         (next)="onNext()">
         
         <!-- Header Content -->
-        <h2 preview-title style="margin: 0; font-size: 1.25rem;">
+        <!-- <h2 preview-title style="margin: 0; font-size: 1.25rem;">
           {{ currentItem()?.title }}
-        </h2>
+        </h2> -->
 
         <!-- Projected Content based on type -->
         <div class="preview-content" *ngIf="currentItem() as item">
